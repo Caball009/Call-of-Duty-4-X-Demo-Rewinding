@@ -186,7 +186,10 @@ int DetermineFramerate(int serverTime)
 bool SetupFileStream(char* fileName)
 {
 	std::string filePath = fileName;
-
+	
+	if (filePath.length() < 2)
+		return false;
+	
 	if (filePath[1] != ':') { // full path should be something like 'X:\'
 		filePath = reinterpret_cast<char*>(0xCB1A9B8); // game base directory
 		char* modName = reinterpret_cast<char*>(0xCB1989D);
