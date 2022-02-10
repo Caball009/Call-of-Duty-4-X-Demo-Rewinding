@@ -24,7 +24,7 @@ FS_Read FS_ReadOrg;
 std::ifstream file;
 std::stack<customSnapshot> frameData;
 std::array<int, 20> serverTimes;
-filestreamState fileStreamMode = notInitiated;
+filestreamState fileStreamMode = notInitialized;
 rewindState rewindMode = notRewinding;
 int snapshotCount = 0;
 int countBuffer = 0;
@@ -207,14 +207,14 @@ int hkFS_Read(void* buffer, int len, int f)
 	fileHandleData_t fh = *reinterpret_cast<fileHandleData_t*>(0xCB1DCC8 + f * sizeof(fileHandleData_t));
 
 	if (strstr(fh.name, ".dm_1")) {
-		if (fileStreamMode == notInitiated) {
+		if (fileStreamMode == notInitialized) {
 			if (!SetupFileStream(fh.name))
-				fileStreamMode = failedInitiation;
+				fileStreamMode = failedInitialization;
 			else
-				fileStreamMode = fullyInitiated;
+				fileStreamMode = fullyInitialized;
 		}
 
-		if (fileStreamMode != fullyInitiated)
+		if (fileStreamMode != fullyInitialized)
 			return FS_ReadOrg(buffer, len, f);
 
 		if (len == 1 && rewindMode) // only reset when the game has just requested the one byte message type
@@ -239,8 +239,8 @@ void WaitForInput()
 	DWORD demoPlaying = 0x934E74;
 
 	while (true) {
-		if (!*reinterpret_cast<byte*>(demoPlaying) && fileStreamMode == fullyInitiated) {
-			fileStreamMode = notInitiated;
+		if (!*reinterpret_cast<byte*>(demoPlaying) && fileStreamMode == fullyInitialized) {
+			fileStreamMode = notInitialized;
 
 			rewindMode = notRewinding;
 			snapshotCount = 0;

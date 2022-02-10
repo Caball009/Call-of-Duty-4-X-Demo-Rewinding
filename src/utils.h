@@ -13,9 +13,9 @@ typedef int qboolean;
 
 enum filestreamState 
 {
-	notInitiated,
-	failedInitiation,
-	fullyInitiated
+	notInitialized,
+	failedInitialization,
+	fullyInitialized
 };
 
 enum rewindState
