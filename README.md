@@ -1,7 +1,7 @@
 # Call of Duty 4 (X) Demo Rewinding
 This is a proof-of-concept to show how one can rewind Call of Duty (X) 4 demos. Unlike some later Call of Duty's, CoD4 does not have 'native' support for demo rewinding.
 ## How to use
-Import the two .cpp files and the header file in a new dll project, compile as x86, and inject the compiled dll into Call of Duty 4 (X) before playing back the demo. The default buttons for interaction are as follows:
+Import the two .cpp files and the header file in a new dll project, compile as x86, and inject the compiled dll into Call of Duty 4 (X) before playing back a demo. The default buttons for interaction are as follows:
 - Right control button for rewinding one time (1000 ms by default). To rewind more you can simply keep right ctrl pressed down;
 - Right alt button to rewind all the way back to the beginning;
 - Right shift button to eject the dll. It's not recommended to use this while the demo is playing.
