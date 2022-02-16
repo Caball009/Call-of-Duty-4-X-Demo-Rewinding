@@ -31,7 +31,7 @@ uint32_t rewindMode = notRewinding;
 uint32_t snapshotCount = 0;
 uint32_t countBuffer = 0;
 
-static_assert(sizeof(size_t) == sizeof(uint32_t), "This code is meant to for 32 bit! \n");
+static_assert(sizeof(size_t) == sizeof(uint32_t), "This code is meant for 32 bit! \n");
 
 void CL_FirstSnapshotWrapper()
 {
