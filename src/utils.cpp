@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <tuple>
 
-bool Utils::RestoreBytes(std::tuple<uint32_t, std::unique_ptr<byte[]>, uint32_t>& tuple)
+bool Utils::RestoreBytes(const std::tuple<uint32_t, std::unique_ptr<byte[]>, uint32_t>& tuple)
 {
 	DWORD curProtection;
 
@@ -27,14 +27,14 @@ void Utils::StoreBytes(std::vector<std::tuple<uint32_t, std::unique_ptr<byte[]>,
 	orgBytes.push_back({ address, std::move(bytes), size });
 }
 
-bool Utils::Re_StoreBytesWrapper(uint32_t address, uint32_t size, restoreState mode)
+bool Utils::Re_StoreBytesWrapper(uint32_t address, uint32_t size, uint32_t mode)
 {
 	static std::vector<std::tuple<uint32_t, std::unique_ptr<byte[]>, uint32_t>> orgBytes;
 
 	if (mode == storeAddress)
 		StoreBytes(orgBytes, address, size);
 	else if (mode == restoreAllAddresses) {
-		for (auto& tuple : orgBytes) 
+		for (const auto& tuple : orgBytes) 
 			RestoreBytes(tuple);
 
 		orgBytes.clear();

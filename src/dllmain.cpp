@@ -1,6 +1,8 @@
 #define enableChatRestoration
 #define enableGamestateRestoration
 
+#include <Windows.h>
+
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -9,10 +11,10 @@
 #include <stack>
 #include <thread>
 #include <unordered_map>
-#include <Windows.h>
+
 #include "utils.h"
 
-int rewindTime = 1000;
+int rewindTime = 500;
 int rewindOneButton = VK_RCONTROL;
 int rewindAllButton = VK_RMENU;
 int ejectDllButton = VK_RSHIFT;
@@ -24,15 +26,17 @@ FS_Read FS_ReadOrg;
 std::ifstream file;
 std::stack<customSnapshot> frameData;
 std::array<int, 20> serverTimes;
-filestreamState fileStreamMode = notInitialized;
-rewindState rewindMode = notRewinding;
-int snapshotCount = 0;
-int countBuffer = 0;
+uint32_t fileStreamMode = notInitialized;
+uint32_t rewindMode = notRewinding;
+uint32_t snapshotCount = 0;
+uint32_t countBuffer = 0;
+
+static_assert(sizeof(size_t) == sizeof(uint32_t), "This code is meant to for 32 bit! \n");
 
 void CL_FirstSnapshotWrapper()
 {
 	int clientNum = *reinterpret_cast<int*>(0x74E338);
-	DWORD CL_FirstSnapshot = *(reinterpret_cast<DWORD*>(0x45C49A + 0x1)) + 0x45C49A + 0x5;
+	DWORD CL_FirstSnapshot = *(reinterpret_cast<DWORD*>(0x45C49A + 1)) + 0x45C49A + 5;
 
 	Utils::WriteBytes(0x45C2A7, "90 90 90 90 90", true); // to avoid some division by 0 bug on CoD4; not necessary for CoD4X
 
@@ -78,7 +82,7 @@ void RestoreOldGamestate()
 		}
 
 		rewindMode = notRewinding;
-		serverTimes = std::array<int, 20>();
+		serverTimes = {};
 		countBuffer = frameData.top().fileOffset;
 		file.seekg(countBuffer);
 
@@ -93,9 +97,9 @@ void RestoreOldGamestate()
 
 		*reinterpret_cast<int*>(0xC84F58) = frameData.top().parseEntitiesNum;
 		*reinterpret_cast<int*>(0xC84F5C) = frameData.top().parseClientsNum;
-		memcpy(reinterpret_cast<char*>(0xCC9180), &frameData.top().snapshots, sizeof(customSnapshot{}.snapshots));
-		memcpy(reinterpret_cast<char*>(0xD65400), &frameData.top().entities, sizeof(customSnapshot{}.entities));
-		memcpy(reinterpret_cast<char*>(0xDE5EA4), &frameData.top().clients, sizeof(customSnapshot{}.clients));
+		memcpy(reinterpret_cast<char*>(0xCC9180), &frameData.top().snapshots, sizeof(customSnapshot::snapshots));
+		memcpy(reinterpret_cast<char*>(0xD65400), &frameData.top().entities, sizeof(customSnapshot::entities));
+		memcpy(reinterpret_cast<char*>(0xDE5EA4), &frameData.top().clients, sizeof(customSnapshot::clients));
 
 #ifdef enableChatRestoration
 		*reinterpret_cast<int*>(0x79DBE8) = frameData.top().axisScore;
@@ -104,17 +108,17 @@ void RestoreOldGamestate()
 		*reinterpret_cast<int*>(0x74A91C) = frameData.top().serverCommandSequence1;
 		*reinterpret_cast<int*>(0x914E20) = frameData.top().serverCommandSequence2;
 		*reinterpret_cast<int*>(0x914E24) = frameData.top().serverCommandSequence3;
-		memcpy(reinterpret_cast<char*>(0x74B798), &frameData.top().chat, sizeof(customSnapshot{}.chat));
+		memcpy(reinterpret_cast<char*>(0x74B798), &frameData.top().chat, sizeof(customSnapshot::chat));
 #endif
 #ifdef enableGamestateRestoration
-		memcpy(reinterpret_cast<char*>(0xC628EC), &frameData.top().gameState, sizeof(customSnapshot{}.gameState));
+		memcpy(reinterpret_cast<char*>(0xC628EC), &frameData.top().gameState, sizeof(customSnapshot::gameState));
 #endif
 	}
 }
 
 void StoreCurrentGamestate(int fps)
 {
-	// this function is executed in a hook that precedes snapshot parsing; so the data must be stored in the most recent entry on the std::stack / frameData
+	// this function is executed in a hook that precedes snapshot parsing; so the data must be stored in the most recent entry on the std::stack (frameData)
 	if ((fps && snapshotCount > 4 && (snapshotCount - 1) % (rewindTime / fps) == 0) || snapshotCount == 4) {
 		if (frameData.size() && frameData.top().fileOffset && !frameData.top().serverTime) {
 			frameData.top().serverTime = *reinterpret_cast<int*>(0xC5F940);
@@ -123,9 +127,9 @@ void StoreCurrentGamestate(int fps)
 
 			frameData.top().parseEntitiesNum = *reinterpret_cast<int*>(0xC84F58);
 			frameData.top().parseClientsNum = *reinterpret_cast<int*>(0xC84F5C);
-			memcpy(&frameData.top().snapshots, reinterpret_cast<char*>(0xCC9180), sizeof(customSnapshot{}.snapshots));
-			memcpy(&frameData.top().entities, reinterpret_cast<char*>(0xD65400), sizeof(customSnapshot{}.entities));
-			memcpy(&frameData.top().clients, reinterpret_cast<char*>(0xDE5EA4), sizeof(customSnapshot{}.clients));
+			memcpy(&frameData.top().snapshots, reinterpret_cast<char*>(0xCC9180), sizeof(customSnapshot::snapshots));
+			memcpy(&frameData.top().entities, reinterpret_cast<char*>(0xD65400), sizeof(customSnapshot::entities));
+			memcpy(&frameData.top().clients, reinterpret_cast<char*>(0xDE5EA4), sizeof(customSnapshot::clients));
 
 #ifdef enableChatRestoration
 			frameData.top().axisScore = *reinterpret_cast<int*>(0x79DBE8);
@@ -134,10 +138,10 @@ void StoreCurrentGamestate(int fps)
 			frameData.top().serverCommandSequence1 = *reinterpret_cast<int*>(0x74A91C);
 			frameData.top().serverCommandSequence2 = *reinterpret_cast<int*>(0x914E20);
 			frameData.top().serverCommandSequence3 = *reinterpret_cast<int*>(0x914E24);
-			memcpy(&frameData.top().chat, reinterpret_cast<char*>(0x74B798), sizeof(customSnapshot{}.chat));
+			memcpy(&frameData.top().chat, reinterpret_cast<char*>(0x74B798), sizeof(customSnapshot::chat));
 #endif
 #ifdef enableGamestateRestoration
-			memcpy(&frameData.top().gameState, reinterpret_cast<char*>(0xC628EC), sizeof(customSnapshot{}.gameState));
+			memcpy(&frameData.top().gameState, reinterpret_cast<char*>(0xC628EC), sizeof(customSnapshot::gameState));
 #endif
 		}
 	}
@@ -156,8 +160,10 @@ int DetermineFramerate(int serverTime)
 		return 0;
 
 	if (serverTimes[(snapshotCount + serverTimes.size() - 1) % serverTimes.size()] > serverTime) {
-		serverTimes = std::array<int, serverTimes.size()>();
+		serverTimes = {};
 		serverTimes[snapshotCount % serverTimes.size()] = serverTime;
+
+		return 0;
 	}
 	else {
 		serverTimes[snapshotCount % serverTimes.size()] = serverTime;
@@ -179,17 +185,15 @@ int DetermineFramerate(int serverTime)
 
 		return highestFrequency->first;
 	}
-
-	return 0;
 }
 
 bool SetupFileStream(char* fileName)
 {
 	std::string filePath = fileName;
-	
+
 	if (filePath.length() < 2)
 		return false;
-	
+
 	if (filePath[1] != ':') { // full path should be something like 'X:\'
 		filePath = reinterpret_cast<char*>(0xCB1A9B8); // game base directory
 		char* modName = reinterpret_cast<char*>(0xCB1989D);
@@ -248,17 +252,17 @@ void WaitForInput()
 			rewindMode = notRewinding;
 			snapshotCount = 0;
 			countBuffer = 0;
-			serverTimes = std::array<int, serverTimes.size()>();
-			frameData = std::stack<customSnapshot>();
+			serverTimes = {};
+			frameData = {};
 
 			file.close();
 		}
 
-		if ((GetAsyncKeyState(rewindOneButton) & 0x01)) 
+		if ((GetAsyncKeyState(rewindOneButton) & 1)) 
 			rewindMode = rewindOne;
-		else if ((GetAsyncKeyState(rewindAllButton) & 0x01))
+		else if ((GetAsyncKeyState(rewindAllButton) & 1))
 			rewindMode = rewindAll;
-		else if ((GetAsyncKeyState(ejectDllButton) & 0x01)) {
+		else if ((GetAsyncKeyState(ejectDllButton) & 1)) {
 			MessageBeep(0);
 			Utils::Re_StoreBytesWrapper(0, 0, restoreAllAddresses);
 
@@ -269,7 +273,7 @@ void WaitForInput()
 	}
 }
 
-DWORD APIENTRY MainThread(HMODULE hModule)
+VOID APIENTRY MainThread(HMODULE hModule)
 {
 	Utils::WriteBytes(0x44E2C3, "EB", true); // bypass error: WARNING: CG_ReadNextSnapshot: way out of range, %i > %i\n
 	Utils::WriteBytes(0x44E4B0, "EB", true); // bypass error: CG_ProcessSnapshots: Server time went backwards
@@ -278,7 +282,7 @@ DWORD APIENTRY MainThread(HMODULE hModule)
 	DWORD FS_ReadAddress = 0x55C120;
 
 	if (*reinterpret_cast<byte*>(FS_ReadAddress) == 0xE9) { // CoD4X
-		FS_ReadAddress = *(reinterpret_cast<DWORD*>(FS_ReadAddress + 0x1)) + FS_ReadAddress + 0x5;
+		FS_ReadAddress = *(reinterpret_cast<DWORD*>(FS_ReadAddress + 1)) + FS_ReadAddress + 5;
 		FS_ReadOrg = static_cast<FS_Read>(Utils::TrampolineHook(reinterpret_cast<byte*>(FS_ReadAddress), reinterpret_cast<byte*>(&hkFS_Read), 6, true)); 
 
 		if (Utils::FindCoD4xModule(cod4x)) {
@@ -297,7 +301,6 @@ DWORD APIENTRY MainThread(HMODULE hModule)
 	WaitForInput();
 
 	FreeLibraryAndExitThread(hModule, 0);
-	return 0;
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)

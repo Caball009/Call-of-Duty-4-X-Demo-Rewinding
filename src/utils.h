@@ -1,12 +1,12 @@
 #ifndef __UTILS_H
 #define __UTILS_H
 
+#include <Windows.h>
+#include <psapi.h>
+
 #include <memory>
 #include <string>
 #include <vector>
-#include <Windows.h>
-
-#include <psapi.h>
 
 typedef unsigned char byte;
 typedef int qboolean;
@@ -35,7 +35,7 @@ enum restoreState
 class Utils
 {
 public:
-	static bool Re_StoreBytesWrapper(uint32_t address, uint32_t size, restoreState mode);
+	static bool Re_StoreBytesWrapper(uint32_t address, uint32_t size, uint32_t mode);
 	static void* TrampolineHook(byte* src, byte* dst, int len, bool stolenBytes);
 	static bool WriteBytes(uint32_t address, std::string bytes, bool storeBytes);
 	static DWORD SignatureScanner(const std::string& module, std::string signature);
@@ -45,7 +45,7 @@ private:
 	static bool Hook(byte* src, byte* dst, int size);
 	static void ReplaceSubstring(std::string& str, const std::string& substr1, const std::string& substr2);
 	static DWORD FindAddress(const MODULEINFO& Process, const std::unique_ptr<byte[]>& bytes, const std::vector<uint32_t>& maskPositions, uint32_t size);
-	static bool RestoreBytes(std::tuple<uint32_t, std::unique_ptr<byte[]>, uint32_t>& tuple);
+	static bool RestoreBytes(const std::tuple<uint32_t, std::unique_ptr<byte[]>, uint32_t>& tuple);
 	static void StoreBytes(std::vector<std::tuple<uint32_t, std::unique_ptr<byte[]>, uint32_t>>& orgBytes, uint32_t address, uint32_t size);
 };
 
