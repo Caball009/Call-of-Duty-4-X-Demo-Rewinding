@@ -14,7 +14,7 @@
 
 #include "utils.h"
 
-int rewindTime = 500;
+int rewindTime = 1000;
 int rewindOneButton = VK_RCONTROL;
 int rewindAllButton = VK_RMENU;
 int ejectDllButton = VK_RSHIFT;
