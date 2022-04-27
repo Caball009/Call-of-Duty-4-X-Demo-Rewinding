@@ -9,6 +9,7 @@
 #include <chrono>
 #include <fstream>
 #include <stack>
+#include <string_view>
 #include <thread>
 #include <unordered_map>
 
@@ -51,11 +52,12 @@ void CL_FirstSnapshotWrapper()
 	Utils::Re_StoreBytesWrapper(0x45C2A7, 0, restoreOneAddress);
 }
 
-void ResetServerTimes(int serverTime)
+void ResetOldClientData(int serverTime)
 {
 	*reinterpret_cast<int*>(0xC5F940) = serverTime;	// cl.snap.serverTime
 	*reinterpret_cast<int*>(0xC628D0) = 0;			// cl.serverTime
 	*reinterpret_cast<int*>(0xC628D4) = 0;			// cl.oldServerTime
+	*reinterpret_cast<int*>(0xC628D8) = 0;			// cl.oldFrameServerTime
 	*reinterpret_cast<int*>(0xC628DC) = 0;			// cl.serverTimeDelta
 
 	*reinterpret_cast<int*>(0x934E8C) = 0;			// clc.timeDemoFrames
@@ -64,7 +66,7 @@ void ResetServerTimes(int serverTime)
 	*reinterpret_cast<int*>(0x956E98) = 0;			// cls.realtime
 	*reinterpret_cast<int*>(0x956E9C) = 0;			// cls.realFrametime
 
-	*reinterpret_cast<int*>(0x74A920) = 0;
+	*reinterpret_cast<int*>(0x74A920) = 0;			// cg_t -> processedSnapshotNum
 	*reinterpret_cast<int*>(0x74E350) = 0;			// cg_t -> latestSnapshotNum
 	*reinterpret_cast<int*>(0x74E354) = 0;			// cg_t -> latestSnapshotTime
 	*reinterpret_cast<int*>(0x74E358) = 0;			// cg_t -> snap
@@ -89,7 +91,7 @@ void RestoreOldGamestate()
 		*reinterpret_cast<int*>(0x8EEB50) = 0;										// clean mini console / kill feed
 		memset(reinterpret_cast<char*>(0x742B20), 0, 64 * 48);						// uav data; 64 players, 48 bytes per player
 
-		ResetServerTimes(frameData.top().serverTime);
+		ResetOldClientData(frameData.top().serverTime);
 		CL_FirstSnapshotWrapper();
 
 		*reinterpret_cast<int*>(0x7975F8) = frameData.top().landTime;				// needed to prevent the player's viewmodel from disappearing off screen 
@@ -212,8 +214,18 @@ bool SetupFileStream(char* fileName)
 int hkFS_Read(void* buffer, int len, int f)
 {
 	fileHandleData_t fh = *reinterpret_cast<fileHandleData_t*>(0xCB1DCC8 + f * sizeof(fileHandleData_t));
+	bool foundDemoFile = false;
 
-	if (strstr(fh.name, ".dm_1")) {
+#if __cplusplus >= 202002L
+	{
+		std::string_view sv = fh.name;
+		foundDemoFile = sv.ends_with(".dm_1");
+	}
+#else
+	foundDemoFile = strstr(fh.name, ".dm_1");
+#endif
+
+	if (foundDemoFile) {
 		if (fileStreamMode == notInitialized) {
 			if (!SetupFileStream(fh.name))
 				fileStreamMode = failedInitialization;
