@@ -6,7 +6,7 @@ Import the two .cpp files and the header file in a new dll project, compile as x
 - Right alt button to rewind all the way back to the beginning;
 - Right shift button to eject the dll. It's not recommended to use this while the demo is playing.
 ## Tested on
-This was tested on Call of Duty 4 v1.7, Call of Duty 4 X v19 and Call of Duty 4 X v20.
+This was tested on Call of Duty 4 v1.7, Call of Duty 4 X v19 - v21.
 ## Bugs
 There's a myriad of glitches/bugs that occur infrequently; this seems to exacerbate when you keep rewinding. For the majority of the time it works as intended, though.
 ## Miscellaneous
