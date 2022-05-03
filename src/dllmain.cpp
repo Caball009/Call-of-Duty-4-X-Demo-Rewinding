@@ -19,7 +19,7 @@ int rewindTime = 1000;
 int rewindOneButton = VK_RCONTROL;
 int rewindAllButton = VK_RMENU;
 int ejectDllButton = VK_RSHIFT;
-std::string cod4x = "cod4x_020.dll"; // it doesn't matter what this is set to, but choosing the correct one is more efficient
+std::string cod4x = "cod4x_021.dll"; // it doesn't matter what this is set to, but choosing the correct one is more efficient
 
 typedef int(_cdecl* FS_Read)(void* buffer, int len, int f);
 FS_Read FS_ReadOrg;
