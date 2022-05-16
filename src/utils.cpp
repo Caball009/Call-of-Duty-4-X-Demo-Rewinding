@@ -106,7 +106,8 @@ void* Utils::TrampolineHook(byte* src, byte* dst, int size, bool stolenBytes)
 	if (size < 5) 
 		return 0;
 
-	int offset = 0;
+	int offset1 = 0;
+	int offset2 = 0;
 	void* gateway = VirtualAlloc(0, size + 8, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 
 	if (!gateway || !Re_StoreBytesWrapper(reinterpret_cast<uint32_t>(src), size, storeAddress))
@@ -123,12 +124,13 @@ void* Utils::TrampolineHook(byte* src, byte* dst, int size, bool stolenBytes)
 			memcpy(gatewayTemp, &relativeAddress, sizeof(DWORD));
 		}
 
-		offset = size;
+		offset1 = size;
+		offset2 = 5;
 	}
 
-	DWORD gatewayRelativeAddress = (reinterpret_cast<DWORD>(src) - reinterpret_cast<DWORD>(gateway)) - 5;
-	*reinterpret_cast<byte*>(reinterpret_cast<DWORD>(gateway) + offset) = 0xE9;
-	*reinterpret_cast<DWORD*>(reinterpret_cast<DWORD>(gateway) + offset + 1) = gatewayRelativeAddress;
+	DWORD gatewayRelativeAddress = (reinterpret_cast<DWORD>(src) - reinterpret_cast<DWORD>(gateway)) - offset2;
+	*reinterpret_cast<byte*>(reinterpret_cast<DWORD>(gateway) + offset1) = 0xE9;
+	*reinterpret_cast<DWORD*>(reinterpret_cast<DWORD>(gateway) + offset1 + 1) = gatewayRelativeAddress;
 
 	if (!Hook(src, dst, size))
 		return 0;
